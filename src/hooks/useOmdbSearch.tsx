@@ -40,12 +40,6 @@ export function useOmdbSearch() {
     }
     setIsSearching(true);
     try {
-      const { data, error } = await supabase.functions.invoke("omdb-proxy", {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-        body: undefined,
-      });
-      // We need to use query params, so let's call differently
       const session = await supabase.auth.getSession();
       const token = session.data.session?.access_token;
       const projectUrl = import.meta.env.VITE_SUPABASE_URL;
