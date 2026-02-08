@@ -11,6 +11,7 @@ export interface WatchlistItem {
   poster_url: string | null;
   media_type: string;
   created_at: string;
+  rating: number | null;
 }
 
 export function useWatchlist() {
@@ -67,8 +68,27 @@ export function useWatchlist() {
     onError: () => toast.error("Failed to remove"),
   });
 
+  const rateMutation = useMutation({
+    mutationFn: async ({ imdbId, rating }: { imdbId: string; rating: number | null }) => {
+      const { error } = await supabase
+        .from("watchlist")
+        .update({ rating: rating === 0 ? null : rating })
+        .eq("imdb_id", imdbId)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    },
+    onError: () => toast.error("Failed to update rating"),
+  });
+
   const isInWatchlist = (imdbId: string) => {
     return query.data?.some((item) => item.imdb_id === imdbId) ?? false;
+  };
+
+  const getRating = (imdbId: string) => {
+    return query.data?.find((item) => item.imdb_id === imdbId)?.rating ?? null;
   };
 
   return {
@@ -76,7 +96,9 @@ export function useWatchlist() {
     isLoading: query.isLoading,
     addToWatchlist: addMutation.mutate,
     removeFromWatchlist: removeMutation.mutate,
+    rateItem: rateMutation.mutate,
     isInWatchlist,
+    getRating,
     isAdding: addMutation.isPending,
   };
 }

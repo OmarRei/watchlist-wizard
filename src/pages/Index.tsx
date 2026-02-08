@@ -11,10 +11,10 @@ import { Search, Film, Loader2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 type FilterType = "all" | "movie" | "series";
-type SortType = "date" | "title" | "year";
+type SortType = "date" | "title" | "year" | "rating";
 
 export default function Index() {
-  const { watchlist, isLoading, removeFromWatchlist, addToWatchlist } = useWatchlist();
+  const { watchlist, isLoading, removeFromWatchlist, addToWatchlist, rateItem } = useWatchlist();
   const { detail, isLoadingDetail, getDetail, setDetail } = useOmdbSearch();
   const [filter, setFilter] = useState<FilterType>("all");
   const [sort, setSort] = useState<SortType>("date");
@@ -25,6 +25,7 @@ export default function Index() {
     .sort((a, b) => {
       if (sort === "title") return a.title.localeCompare(b.title);
       if (sort === "year") return (b.year ?? "").localeCompare(a.year ?? "");
+      if (sort === "rating") return (b.rating ?? 0) - (a.rating ?? 0);
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
@@ -55,6 +56,7 @@ export default function Index() {
                 <SelectItem value="date">Date Added</SelectItem>
                 <SelectItem value="title">Title</SelectItem>
                 <SelectItem value="year">Year</SelectItem>
+                <SelectItem value="rating">Rating</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -83,6 +85,8 @@ export default function Index() {
                 poster={item.poster_url}
                 type={item.media_type}
                 imdbId={item.imdb_id}
+                rating={item.rating}
+                onRate={(r) => rateItem({ imdbId: item.imdb_id, rating: r })}
                 onClick={() => openDetail(item.imdb_id)}
               />
             ))}
