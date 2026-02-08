@@ -36,7 +36,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const apiKey = Deno.env.get("a1fc1aeb");
+    const apiKey = Deno.env.get("OMDB_API_KEY");
     if (!apiKey) {
       return new Response(JSON.stringify({ error: "OMDB API key not configured" }), {
         status: 500,
