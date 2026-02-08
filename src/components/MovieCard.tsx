@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Film, Tv, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import StarRating from "@/components/StarRating";
 
 interface MovieCardProps {
   title: string;
@@ -9,7 +10,9 @@ interface MovieCardProps {
   type: string;
   imdbId: string;
   isInWatchlist?: boolean;
+  rating?: number | null;
   onAdd?: () => void;
+  onRate?: (rating: number) => void;
   onClick?: () => void;
 }
 
@@ -19,7 +22,9 @@ export default function MovieCard({
   poster,
   type,
   isInWatchlist,
+  rating,
   onAdd,
+  onRate,
   onClick,
 }: MovieCardProps) {
   const hasPoster = poster && poster !== "N/A";
@@ -54,6 +59,11 @@ export default function MovieCard({
       <div className="absolute inset-0 bg-gradient-to-t from-background/95 via-background/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-3">
         <p className="text-sm font-semibold text-foreground line-clamp-2">{title}</p>
         <p className="text-xs text-muted-foreground">{year} · {type}</p>
+        {onRate && (
+          <div className="mt-1">
+            <StarRating rating={rating ?? null} onChange={onRate} />
+          </div>
+        )}
         {onAdd && (
           <Button
             size="sm"
@@ -72,7 +82,12 @@ export default function MovieCard({
       {/* Always-visible title below poster */}
       <div className="p-2">
         <p className="text-sm font-medium text-foreground truncate">{title}</p>
-        <p className="text-xs text-muted-foreground">{year}</p>
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">{year}</p>
+          {rating != null && rating > 0 && (
+            <StarRating rating={rating} readOnly size="sm" />
+          )}
+        </div>
       </div>
     </motion.div>
   );
