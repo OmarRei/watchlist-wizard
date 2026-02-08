@@ -25,6 +25,7 @@ export interface OmdbDetail {
   imdbRating: string;
   imdbID: string;
   Type: string;
+  totalSeasons?: string;
 }
 
 export function useOmdbSearch() {
