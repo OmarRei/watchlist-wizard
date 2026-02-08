@@ -47,6 +47,7 @@ Deno.serve(async (req) => {
     const url = new URL(req.url);
     const search = url.searchParams.get("s");
     const imdbId = url.searchParams.get("i");
+    const season = url.searchParams.get("Season");
 
     if (!search && !imdbId) {
       return new Response(JSON.stringify({ error: "Missing search query or IMDB ID" }), {
@@ -69,7 +70,12 @@ Deno.serve(async (req) => {
       const page = url.searchParams.get("page");
       if (page) omdbUrl += `&page=${encodeURIComponent(page)}`;
     } else if (imdbId) {
-      omdbUrl += `&i=${encodeURIComponent(imdbId.trim())}&plot=full`;
+      omdbUrl += `&i=${encodeURIComponent(imdbId.trim())}`;
+      if (season) {
+        omdbUrl += `&Season=${encodeURIComponent(season)}`;
+      } else {
+        omdbUrl += `&plot=full`;
+      }
     }
 
     const omdbRes = await fetch(omdbUrl);

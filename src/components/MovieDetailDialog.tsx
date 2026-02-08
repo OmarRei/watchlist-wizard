@@ -1,7 +1,8 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Star, Clock, Trash2, Plus, Film, Tv, Loader2 } from "lucide-react";
+import { Star, Clock, Trash2, Plus, Film, Tv, Loader2, Shuffle } from "lucide-react";
+import { useRandomEpisode } from "@/hooks/useRandomEpisode";
 import type { OmdbDetail } from "@/hooks/useOmdbSearch";
 
 interface Props {
@@ -23,10 +24,20 @@ export default function MovieDetailDialog({
   onAdd,
   onRemove,
 }: Props) {
+  const { pickRandom, result: randomEp, isLoading: isPickingEp, clearResult } = useRandomEpisode();
+
   if (!detail && !isLoading) return null;
 
+  const isSeries = detail?.Type === "series";
+  const totalSeasons = detail?.totalSeasons ? parseInt(detail.totalSeasons) : 0;
+
+  const handleClose = (o: boolean) => {
+    onOpenChange(o);
+    if (!o) clearResult();
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card border-border">
         {isLoading ? (
           <div className="flex items-center justify-center py-16">
@@ -46,7 +57,7 @@ export default function MovieDetailDialog({
                 />
               ) : (
                 <div className="w-48 h-72 bg-muted rounded-lg flex items-center justify-center flex-shrink-0">
-                  {detail.Type === "series" ? <Tv className="h-12 w-12 text-muted-foreground" /> : <Film className="h-12 w-12 text-muted-foreground" />}
+                  {isSeries ? <Tv className="h-12 w-12 text-muted-foreground" /> : <Film className="h-12 w-12 text-muted-foreground" />}
                 </div>
               )}
               <div className="space-y-3 flex-1">
@@ -75,6 +86,41 @@ export default function MovieDetailDialog({
                 {detail.Actors && detail.Actors !== "N/A" && (
                   <p className="text-xs text-muted-foreground"><strong>Cast:</strong> {detail.Actors}</p>
                 )}
+
+                {/* Random Episode Picker for series */}
+                {isSeries && totalSeasons > 0 && (
+                  <div className="pt-2 space-y-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => pickRandom(detail.imdbID, totalSeasons)}
+                      disabled={isPickingEp}
+                      className="w-full"
+                    >
+                      {isPickingEp ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Shuffle className="h-4 w-4 mr-2" />
+                      )}
+                      Random Episode
+                    </Button>
+                    {randomEp && (
+                      <div className="rounded-md bg-muted p-3 text-sm space-y-1">
+                        <p className="font-semibold text-foreground">
+                          S{String(randomEp.season).padStart(2, "0")}E{String(randomEp.episode.Episode).padStart(2, "0")} — {randomEp.episode.Title}
+                        </p>
+                        {randomEp.episode.imdbRating && randomEp.episode.imdbRating !== "N/A" && (
+                          <p className="text-xs text-muted-foreground flex items-center gap-1">
+                            <Star className="h-3 w-3 text-primary fill-primary" /> {randomEp.episode.imdbRating}
+                          </p>
+                        )}
+                        {randomEp.episode.Released && randomEp.episode.Released !== "N/A" && (
+                          <p className="text-xs text-muted-foreground">Released: {randomEp.episode.Released}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 <div className="pt-2">
                   {isInWatchlist ? (
                     <Button variant="destructive" onClick={onRemove}>
