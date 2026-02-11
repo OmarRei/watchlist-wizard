@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useWatchlist } from "@/hooks/useWatchlist";
+import { useWatchlist, WatchStatus, WATCH_STATUSES } from "@/hooks/useWatchlist";
 import { useOmdbSearch } from "@/hooks/useOmdbSearch";
 import MovieCard from "@/components/MovieCard";
 import MovieDetailDialog from "@/components/MovieDetailDialog";
@@ -12,16 +12,19 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 type FilterType = "all" | "movie" | "series";
 type SortType = "date" | "title" | "year" | "rating";
+type StatusFilter = "all" | WatchStatus;
 
 export default function Index() {
-  const { watchlist, isLoading, removeFromWatchlist, addToWatchlist, rateItem } = useWatchlist();
+  const { watchlist, isLoading, removeFromWatchlist, addToWatchlist, rateItem, updateStatus } = useWatchlist();
   const { detail, isLoadingDetail, getDetail, setDetail } = useOmdbSearch();
   const [filter, setFilter] = useState<FilterType>("all");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sort, setSort] = useState<SortType>("date");
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const filtered = watchlist
     .filter((item) => filter === "all" || item.media_type === filter)
+    .filter((item) => statusFilter === "all" || item.status === statusFilter)
     .sort((a, b) => {
       if (sort === "title") return a.title.localeCompare(b.title);
       if (sort === "year") return (b.year ?? "").localeCompare(a.year ?? "");
@@ -48,6 +51,17 @@ export default function Index() {
                 <TabsTrigger value="series">Series</TabsTrigger>
               </TabsList>
             </Tabs>
+            <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+              <SelectTrigger className="w-36">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Status</SelectItem>
+                {WATCH_STATUSES.map((s) => (
+                  <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select value={sort} onValueChange={(v) => setSort(v as SortType)}>
               <SelectTrigger className="w-32">
                 <SelectValue />
@@ -86,6 +100,7 @@ export default function Index() {
                 type={item.media_type}
                 imdbId={item.imdb_id}
                 rating={item.rating}
+                status={item.status}
                 onRate={(r) => rateItem({ imdbId: item.imdb_id, rating: r })}
                 onClick={() => openDetail(item.imdb_id)}
               />
@@ -100,6 +115,10 @@ export default function Index() {
         open={dialogOpen}
         onOpenChange={(o) => { setDialogOpen(o); if (!o) setDetail(null); }}
         isInWatchlist={detail ? watchlist.some((w) => w.imdb_id === detail.imdbID) : false}
+        currentStatus={detail ? watchlist.find((w) => w.imdb_id === detail.imdbID)?.status : undefined}
+        onStatusChange={(status) => {
+          if (detail) updateStatus({ imdbId: detail.imdbID, status });
+        }}
         onAdd={() => {
           if (detail) {
             addToWatchlist({

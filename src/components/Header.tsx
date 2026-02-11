@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
-import { Clapperboard, Search, LogOut, Film } from "lucide-react";
+import { Clapperboard, Search, LogOut, Film, BarChart3, User } from "lucide-react";
 
 export default function Header() {
   const { signOut } = useAuth();
@@ -28,6 +28,20 @@ export default function Header() {
             asChild
           >
             <Link to="/search"><Search className="h-4 w-4 mr-1" /> Search</Link>
+          </Button>
+          <Button
+            variant={location.pathname === "/stats" ? "secondary" : "ghost"}
+            size="sm"
+            asChild
+          >
+            <Link to="/stats"><BarChart3 className="h-4 w-4 mr-1" /> Stats</Link>
+          </Button>
+          <Button
+            variant={location.pathname === "/profile" ? "secondary" : "ghost"}
+            size="sm"
+            asChild
+          >
+            <Link to="/profile"><User className="h-4 w-4 mr-1" /> Profile</Link>
           </Button>
           <Button variant="ghost" size="sm" onClick={signOut}>
             <LogOut className="h-4 w-4" />

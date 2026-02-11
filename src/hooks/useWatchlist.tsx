@@ -12,6 +12,16 @@ const watchlistItemSchema = z.object({
   media_type: z.enum(["movie", "series", "episode"]),
 });
 
+export type WatchStatus = "watching" | "completed" | "plan_to_watch" | "on_hold" | "dropped";
+
+export const WATCH_STATUSES: { value: WatchStatus; label: string }[] = [
+  { value: "watching", label: "Watching" },
+  { value: "completed", label: "Completed" },
+  { value: "plan_to_watch", label: "Plan to Watch" },
+  { value: "on_hold", label: "On Hold" },
+  { value: "dropped", label: "Dropped" },
+];
+
 export interface WatchlistItem {
   id: string;
   imdb_id: string;
@@ -21,6 +31,7 @@ export interface WatchlistItem {
   media_type: string;
   created_at: string;
   rating: number | null;
+  status: WatchStatus;
 }
 
 export function useWatchlist() {
@@ -97,6 +108,21 @@ export function useWatchlist() {
     onError: () => toast.error("Failed to update rating"),
   });
 
+  const statusMutation = useMutation({
+    mutationFn: async ({ imdbId, status }: { imdbId: string; status: WatchStatus }) => {
+      const { error } = await supabase
+        .from("watchlist")
+        .update({ status })
+        .eq("imdb_id", imdbId)
+        .eq("user_id", user!.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["watchlist"] });
+    },
+    onError: () => toast.error("Failed to update status"),
+  });
+
   const isInWatchlist = (imdbId: string) => {
     return query.data?.some((item) => item.imdb_id === imdbId) ?? false;
   };
@@ -105,14 +131,20 @@ export function useWatchlist() {
     return query.data?.find((item) => item.imdb_id === imdbId)?.rating ?? null;
   };
 
+  const getStatus = (imdbId: string): WatchStatus => {
+    return query.data?.find((item) => item.imdb_id === imdbId)?.status ?? "plan_to_watch";
+  };
+
   return {
     watchlist: query.data ?? [],
     isLoading: query.isLoading,
     addToWatchlist: addMutation.mutate,
     removeFromWatchlist: removeMutation.mutate,
     rateItem: rateMutation.mutate,
+    updateStatus: statusMutation.mutate,
     isInWatchlist,
     getRating,
+    getStatus,
     isAdding: addMutation.isPending,
   };
 }

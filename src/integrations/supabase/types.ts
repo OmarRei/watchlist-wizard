@@ -22,6 +22,7 @@ export type Database = {
           media_type: string
           poster_url: string | null
           rating: number | null
+          status: string
           title: string
           user_id: string
           year: string | null
@@ -33,6 +34,7 @@ export type Database = {
           media_type?: string
           poster_url?: string | null
           rating?: number | null
+          status?: string
           title: string
           user_id: string
           year?: string | null
@@ -44,6 +46,7 @@ export type Database = {
           media_type?: string
           poster_url?: string | null
           rating?: number | null
+          status?: string
           title?: string
           user_id?: string
           year?: string | null

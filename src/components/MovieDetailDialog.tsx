@@ -1,8 +1,10 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Star, Clock, Trash2, Plus, Film, Tv, Loader2, Shuffle } from "lucide-react";
 import { useRandomEpisode } from "@/hooks/useRandomEpisode";
+import { WATCH_STATUSES, type WatchStatus } from "@/hooks/useWatchlist";
 import type { OmdbDetail } from "@/hooks/useOmdbSearch";
 
 interface Props {
@@ -11,8 +13,10 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   isInWatchlist: boolean;
+  currentStatus?: WatchStatus;
   onAdd: () => void;
   onRemove: () => void;
+  onStatusChange?: (status: WatchStatus) => void;
 }
 
 export default function MovieDetailDialog({
@@ -21,8 +25,10 @@ export default function MovieDetailDialog({
   open,
   onOpenChange,
   isInWatchlist,
+  currentStatus,
   onAdd,
   onRemove,
+  onStatusChange,
 }: Props) {
   const { pickRandom, result: randomEp, isLoading: isPickingEp, clearResult } = useRandomEpisode();
 
@@ -121,7 +127,19 @@ export default function MovieDetailDialog({
                   </div>
                 )}
 
-                <div className="pt-2">
+                <div className="pt-2 space-y-3">
+                  {isInWatchlist && onStatusChange && (
+                    <Select value={currentStatus ?? "plan_to_watch"} onValueChange={(v) => onStatusChange(v as WatchStatus)}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue placeholder="Set status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {WATCH_STATUSES.map((s) => (
+                          <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
                   {isInWatchlist ? (
                     <Button variant="destructive" onClick={onRemove}>
                       <Trash2 className="h-4 w-4 mr-2" /> Remove from Watchlist
