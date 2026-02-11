@@ -1,42 +1,73 @@
 
-# 🎬 Movie & Series Tracker
 
-A dark, cinematic web app for tracking watched movies and series, powered by the OMDB API.
+# Professional Features for WatchLog
 
-## Design
-- **Dark cinematic theme** inspired by Letterboxd/Netflix — dark backgrounds, movie poster imagery, subtle gradients
-- **Responsive layout** that works beautifully on desktop and mobile
-- Grid/card-based display with movie posters as the primary visual element
+Adding three major features: watch status tracking, a statistics dashboard, and a profile page.
 
-## Pages & Features
+---
 
-### 1. Home / My Watchlist
-- Display all watched movies and series in a poster grid
-- Filter tabs: **All**, **Movies**, **Series**
-- Sort by: date added, title, year
-- Empty state with a prompt to search and add content
-- Click a card to see details (title, year, plot, IMDb rating, genre)
+## 1. Watch Status Tracking
 
-### 2. Search
-- Search bar with real-time results from the OMDB API
-- Results show poster, title, year, and type (movie/series)
-- One-click "Mark as Watched" button on each result
-- Already-watched items are visually indicated
+Add a `status` column to the `watchlist` table so each item can be categorized:
+- **Watching** -- currently in progress
+- **Completed** -- finished watching
+- **Plan to Watch** -- on the to-do list
+- **On Hold** -- paused
+- **Dropped** -- abandoned
 
-### 3. Movie/Series Detail View
-- Full details: poster, plot, genre, director, actors, IMDb rating, runtime
-- Option to remove from watched list
+The watchlist page will get a status filter (tabs or dropdown) and each movie card will show its status badge. The detail dialog will have a status selector dropdown.
 
-## Data & Backend (Lovable Cloud)
-- **User authentication** (email sign-up/login) so each user has their own watchlist
-- **Database** to store each user's watched items (title, OMDB ID, poster URL, type, date added)
-- **Edge function** to proxy OMDB API calls, keeping the API key secure on the server side
+## 2. Statistics Dashboard
 
-## API Key Setup
-- You'll need a free OMDB API key from [omdbapi.com](http://www.omdbapi.com/apikey.aspx) — it takes ~30 seconds to get one
-- The key will be stored securely as a server-side secret, never exposed to the browser
+A new `/stats` page accessible from the header, showing:
+- Total items by status (watching, completed, etc.)
+- Genre breakdown (pie chart via Recharts, pulled from OMDB detail data stored locally)
+- Ratings distribution (bar chart)
+- Movies vs Series count
+- Total items in watchlist
 
-## Security
-- API key stored as a Supabase/Cloud secret, accessed only via edge functions
-- Row-level security so users can only see/modify their own watchlist
-- Input validation on all search queries
+Stats will be computed client-side from the existing watchlist data and cached OMDB details.
+
+## 3. Profile Page
+
+A new `/profile` page showing:
+- User email and account creation date
+- Avatar (using initials-based avatar from Radix)
+- Watchlist summary stats (total items, average rating)
+- Quick links to watchlist and search
+
+No new database table needed -- profile data comes from the auth session.
+
+---
+
+## Technical Details
+
+### Database Migration
+
+Add a `status` column to the `watchlist` table:
+
+```sql
+ALTER TABLE public.watchlist
+ADD COLUMN status text NOT NULL DEFAULT 'plan_to_watch';
+```
+
+Existing items will default to `plan_to_watch`. No RLS changes needed since existing policies already cover all CRUD by user_id.
+
+### New Files
+- `src/pages/StatsPage.tsx` -- statistics dashboard with Recharts charts
+- `src/pages/ProfilePage.tsx` -- user profile page
+
+### Modified Files
+- `src/integrations/supabase/types.ts` -- will auto-update after migration
+- `src/hooks/useWatchlist.tsx` -- add `status` field to queries, mutations, and the `WatchlistItem` interface; add `updateStatus` mutation
+- `src/components/MovieCard.tsx` -- show status badge on card
+- `src/components/MovieDetailDialog.tsx` -- add status selector dropdown
+- `src/components/Header.tsx` -- add Stats and Profile nav links
+- `src/pages/Index.tsx` -- add status filter tab/dropdown
+- `src/App.tsx` -- add routes for `/stats` and `/profile`
+
+### Stats Page Charts (using existing Recharts dependency)
+- Pie chart for status breakdown
+- Bar chart for ratings distribution
+- Pie chart for movies vs series split
+
