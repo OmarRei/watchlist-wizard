@@ -1,7 +1,25 @@
 import { motion } from "framer-motion";
 import { Film, Tv, Plus, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import StarRating from "@/components/StarRating";
+import type { WatchStatus } from "@/hooks/useWatchlist";
+
+const STATUS_LABELS: Record<WatchStatus, string> = {
+  watching: "Watching",
+  completed: "Completed",
+  plan_to_watch: "Plan to Watch",
+  on_hold: "On Hold",
+  dropped: "Dropped",
+};
+
+const STATUS_VARIANTS: Record<WatchStatus, "default" | "secondary" | "destructive" | "outline"> = {
+  watching: "default",
+  completed: "secondary",
+  plan_to_watch: "outline",
+  on_hold: "outline",
+  dropped: "destructive",
+};
 
 interface MovieCardProps {
   title: string;
@@ -11,6 +29,7 @@ interface MovieCardProps {
   imdbId: string;
   isInWatchlist?: boolean;
   rating?: number | null;
+  status?: WatchStatus;
   onAdd?: () => void;
   onRate?: (rating: number) => void;
   onClick?: () => void;
@@ -23,6 +42,7 @@ export default function MovieCard({
   type,
   isInWatchlist,
   rating,
+  status,
   onAdd,
   onRate,
   onClick,
@@ -78,6 +98,15 @@ export default function MovieCard({
           </Button>
         )}
       </div>
+
+      {/* Status badge */}
+      {status && (
+        <div className="absolute top-2 left-2">
+          <Badge variant={STATUS_VARIANTS[status]} className="text-[10px] px-1.5 py-0">
+            {STATUS_LABELS[status]}
+          </Badge>
+        </div>
+      )}
 
       {/* Always-visible title below poster */}
       <div className="p-2">

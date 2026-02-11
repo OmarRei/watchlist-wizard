@@ -1,0 +1,1 @@
+ALTER TABLE public.watchlist ADD COLUMN status text NOT NULL DEFAULT 'plan_to_watch';
