@@ -130,7 +130,11 @@ export function useOmdbSearch() {
 
   const getTrending = async () => {
     // Since OMDB doesn't have a dedicated trending endpoint, we'll search for popular titles
-    const popularSearches = ["The Office", "Breaking Bad", "Inception", "The Matrix", "Interstellar"];
+    const popularSearches = [
+      "Stranger Things", "Oppenheimer", "Dune", "The Bear", "Squid Game",
+      "Breaking Bad", "Inception", "The Matrix", "Interstellar", "Barbie",
+      "Wednesday", "The Last of Us", "Succession", "The Mandalorian", "Avatar",
+    ];
     
     // Cancel previous search request
     searchAbortRef.current?.abort();
@@ -146,33 +150,40 @@ export function useOmdbSearch() {
       // Search for each popular title and combine results
       const allResults: OmdbSearchResult[] = [];
       
-      for (const title of popularSearches) {
-        try {
-          const res = await fetch(
-            `${projectUrl}/functions/v1/omdb-proxy?s=${encodeURIComponent(title)}`,
-            {
-              headers: {
-                Authorization: `Bearer ${token}`,
-                apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
-              },
-              signal: searchAbortRef.current.signal,
+      // Fetch in parallel batches of 5
+      const batchSize = 5;
+      for (let i = 0; i < popularSearches.length; i += batchSize) {
+        const batch = popularSearches.slice(i, i + batchSize);
+        const promises = batch.map(async (title) => {
+          try {
+            const res = await fetch(
+              `${projectUrl}/functions/v1/omdb-proxy?s=${encodeURIComponent(title)}`,
+              {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                  apikey: import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+                },
+                signal: searchAbortRef.current!.signal,
+              }
+            );
+            const json = await res.json();
+            if (json.Search && Array.isArray(json.Search)) {
+              // Take first 2 results from each search for a richer grid
+              return json.Search.slice(0, 2) as OmdbSearchResult[];
             }
-          );
-          const json = await res.json();
-          if (json.Search && Array.isArray(json.Search)) {
-            // Add first result from each search to create a diverse mix
-            allResults.push(json.Search[0]);
+          } catch (err) {
+            console.log(`Failed to fetch ${title}`, err);
           }
-        } catch (err) {
-          // Continue with other searches if one fails
-          console.log(`Failed to fetch ${title}`, err);
-        }
+          return [] as OmdbSearchResult[];
+        });
+        const batchResults = await Promise.all(promises);
+        batchResults.forEach((r) => allResults.push(...r));
       }
       
-      // Remove duplicates by IMDB ID and limit to 10 results
+      // Remove duplicates by IMDB ID and limit to 20 results
       const uniqueResults = Array.from(
         new Map(allResults.map(item => [item.imdbID, item])).values()
-      ).slice(0, 10);
+      ).slice(0, 20);
       
       setResults(uniqueResults);
     } catch (err: unknown) {

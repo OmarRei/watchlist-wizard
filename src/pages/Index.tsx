@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useWatchlist, WatchStatus, WATCH_STATUSES } from "@/hooks/useWatchlist";
 import { useOmdbSearch } from "@/hooks/useOmdbSearch";
 import MovieCard from "@/components/MovieCard";
+import AdCard from "@/components/AdCard";
 import MovieDetailDialog from "@/components/MovieDetailDialog";
 import Header from "@/components/Header";
 import { Button } from "@/components/ui/button";
@@ -91,20 +92,27 @@ export default function Index() {
           </div>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {filtered.map((item) => (
-              <MovieCard
-                key={item.id}
-                title={item.title}
-                year={item.year}
-                poster={item.poster_url}
-                type={item.media_type}
-                imdbId={item.imdb_id}
-                rating={item.rating}
-                status={item.status}
-                onRate={(r) => rateItem({ imdbId: item.imdb_id, rating: r })}
-                onClick={() => openDetail(item.imdb_id)}
-              />
-            ))}
+            {filtered.flatMap((item, i) => {
+              const nodes: React.ReactNode[] = [];
+              if (i > 0 && i % 10 === 0) {
+                nodes.push(<AdCard key={`ad-${i}`} />);
+              }
+              nodes.push(
+                <MovieCard
+                  key={item.id}
+                  title={item.title}
+                  year={item.year}
+                  poster={item.poster_url}
+                  type={item.media_type}
+                  imdbId={item.imdb_id}
+                  rating={item.rating}
+                  status={item.status}
+                  onRate={(r) => rateItem({ imdbId: item.imdb_id, rating: r })}
+                  onClick={() => openDetail(item.imdb_id)}
+                />
+              );
+              return nodes;
+            })}
           </div>
         )}
       </main>

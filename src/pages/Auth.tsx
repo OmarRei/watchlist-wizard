@@ -55,7 +55,7 @@ export default function Auth() {
         <div className="text-center">
           <div className="flex items-center justify-center gap-2 mb-2">
             <Clapperboard className="h-8 w-8 text-primary" />
-            <h1 className="text-5xl text-foreground">WATCHLOG</h1>
+            <h1 className="text-5xl text-foreground">WATCH HUB</h1>
           </div>
           <p className="text-muted-foreground text-sm">Track every movie & series you watch</p>
         </div>
