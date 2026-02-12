@@ -1,29 +1,75 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Input } from "@/components/ui/input";
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, TrendingUp } from "lucide-react";
 import { useOmdbSearch } from "@/hooks/useOmdbSearch";
 import { useWatchlist } from "@/hooks/useWatchlist";
 import MovieCard from "@/components/MovieCard";
+import AdCard from "@/components/AdCard";
 import MovieDetailDialog from "@/components/MovieDetailDialog";
 import Header from "@/components/Header";
 
+const AD_INTERVAL = 8;
+
 export default function SearchPage() {
   const [query, setQuery] = useState("");
-  const { results, isSearching, search, detail, isLoadingDetail, getDetail, setDetail } = useOmdbSearch();
+  const [isTrending, setIsTrending] = useState(true);
+  const { results, isSearching, search, detail, isLoadingDetail, getDetail, setDetail, getTrending } = useOmdbSearch();
   const { addToWatchlist, removeFromWatchlist, isInWatchlist } = useWatchlist();
   const [dialogOpen, setDialogOpen] = useState(false);
+
+  useEffect(() => {
+    getTrending();
+  }, []);
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
-      search(query);
+      if (query.trim()) {
+        setIsTrending(false);
+        search(query);
+      } else {
+        setIsTrending(true);
+        getTrending();
+      }
     },
-    [query, search]
+    [query, search, getTrending]
   );
 
   const openDetail = (imdbId: string) => {
     getDetail(imdbId);
     setDialogOpen(true);
+  };
+
+  const renderGrid = () => {
+    const items: React.ReactNode[] = [];
+    results.forEach((r, i) => {
+      // Insert ad every AD_INTERVAL cards
+      if (i > 0 && i % AD_INTERVAL === 0) {
+        items.push(<AdCard key={`ad-${i}`} />);
+      }
+      items.push(
+        <MovieCard
+          key={r.imdbID}
+          title={r.Title}
+          year={r.Year}
+          poster={r.Poster}
+          type={r.Type}
+          imdbId={r.imdbID}
+          isInWatchlist={isInWatchlist(r.imdbID)}
+          onAdd={() =>
+            addToWatchlist({
+              imdb_id: r.imdbID,
+              title: r.Title,
+              year: r.Year,
+              poster_url: r.Poster !== "N/A" ? r.Poster : undefined,
+              media_type: r.Type,
+            })
+          }
+          onClick={() => openDetail(r.imdbID)}
+        />
+      );
+    });
+    return items;
   };
 
   return (
@@ -49,29 +95,17 @@ export default function SearchPage() {
         )}
 
         {!isSearching && results.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {results.map((r) => (
-              <MovieCard
-                key={r.imdbID}
-                title={r.Title}
-                year={r.Year}
-                poster={r.Poster}
-                type={r.Type}
-                imdbId={r.imdbID}
-                isInWatchlist={isInWatchlist(r.imdbID)}
-                onAdd={() =>
-                  addToWatchlist({
-                    imdb_id: r.imdbID,
-                    title: r.Title,
-                    year: r.Year,
-                    poster_url: r.Poster !== "N/A" ? r.Poster : undefined,
-                    media_type: r.Type,
-                  })
-                }
-                onClick={() => openDetail(r.imdbID)}
-              />
-            ))}
-          </div>
+          <>
+            {isTrending && (
+              <div className="flex items-center gap-2 mb-4">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                <h2 className="text-xl text-foreground">Trending & Popular</h2>
+              </div>
+            )}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {renderGrid()}
+            </div>
+          </>
         )}
 
         {!isSearching && results.length === 0 && query && (

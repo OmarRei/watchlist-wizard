@@ -12,7 +12,7 @@ export default function Header() {
       <div className="container mx-auto flex items-center justify-between h-14 px-4">
         <Link to="/" className="flex items-center gap-2">
           <Clapperboard className="h-6 w-6 text-primary" />
-          <span className="text-2xl text-foreground tracking-wider">WATCHLOG</span>
+          <span className="text-2xl text-foreground tracking-wider">WATCH HUB</span>
         </Link>
         <nav className="flex items-center gap-1">
           <Button
